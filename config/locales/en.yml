@@ -1,0 +1,21 @@
+# English strings go here for Rails i18n
+en:
+  chakuchi_menu_caption: Chakuchi
+  chakuchi_label_title: Chakuchi
+  chakuchi_label_version_details: Version details
+  chakuchi_label_user_details: User details
+  chakuchi_label_version_name: Version Name
+  chakuchi_label_start_date: Start Date
+  chakuchi_label_due_date: Due Date
+  chakuchi_label_issues_count: Issues
+  chakuchi_label_closed_issues_count: Closed Issues
+  chakuchi_label_workdays_left: Workdays Left
+  chakuchi_label_days_left: Days late
+  chakuchi_label_estimated_completion_date: Chakuchi Date
+  chakuchi_label_user_name: User Name
+  chakuchi_label_estimated_hours: Estimated Hours
+  chakuchi_label_spent_hours: Spent Hours
+  chakuchi_label_progress: '% Done'
+  chakuchi_label_unit_days: d
+  chakuchi_label_total: Total
+  chakuchi_label_no_assignee: Not Assigned

@@ -1,0 +1,125 @@
+<div>
+<!-- Title -->
+<h2><%= I18n.t(:chakuchi_label_title) %></h2>
+<!-- Form -->
+<form id="form" action="" method="GET">
+<table>
+  <tr>
+    <td style="width: 100px">
+      <label><%= I18n.t(:label_version) %></label>
+    </td>
+    <td>
+      <!-- Dropdown list of the version -->
+      <select name="version_id">
+        <option value="" <% if @version_id == "" then %> selected <% end %>></option>
+        <% @project.versions.each{|version| %>
+          <option value="<%= version.id %>" <% if @version_id.to_i == version.id then %> selected <% end %>><%= version.name %></option>
+        <% } %>
+      </select>
+    </td>
+  </tr>
+</table>
+<input name="project_id" type="hidden" value="<%= @project_id %>">
+</form>
+<!-- Update and clear links -->
+<p class="buttons">
+  <a href="#" onclick="$('#form').submit(); return false;" class="icon icon-checked"><%= I18n.t(:button_apply) %></a>
+  <a class="icon icon-reload" href="./chakuchi?clear=1&project_id=<%= @project_id %>"><%= I18n.t(:button_clear) %></a>
+</p>
+<!-- Warning message -->
+<% if @version.nil? then %>
+  <p class="nodata">表示するデータがありません</p>
+<% end %>
+<!-- Sub title -->
+<% if @version != nil then %>
+<h3><%= I18n.t(:chakuchi_label_version_details) %></h3>
+<!-- Version table -->
+  <table id="version_table" class="list" style="table-layout: fixed;">
+    <thead>
+      <tr>
+        <th><%= I18n.t(:chakuchi_label_version_name) %></th>
+        <th><%= I18n.t(:chakuchi_label_start_date) %></th>
+        <th><%= I18n.t(:chakuchi_label_due_date) %></th>
+        <th><%= I18n.t(:chakuchi_label_issues_count) %></th>
+        <th><%= I18n.t(:chakuchi_label_closed_issues_count) %></th>
+        <th><%= I18n.t(:chakuchi_label_workdays_left) %></th>
+        <th><%= I18n.t(:chakuchi_label_days_left) %></th>
+        <th><%= I18n.t(:chakuchi_label_estimated_completion_date) %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><%= @version.name %></td>
+        <td><%= (@version.start_date || "-") %></td>
+        <td><%= @version.due_date %></td>
+        <td><%= @version.issues_count %></td>
+        <td><%= @version.issues_count - @version.open_issues_count %></td>
+        <td><%= @workdays_left %> <%= I18n.t(:chakuchi_label_unit_days) %></td>
+        <td><%= @days_left_hash.values.inject(:+) %> <%= I18n.t(:chakuchi_label_unit_days) %></td>
+        <td><%= @estimated_completion_date_hash.max{ |x, y| x[1] <=> y[1] }[1] %></td>
+      </tr>
+    </tbody>
+  </table>
+<% end %>
+<!-- Sub Title -->
+<% if @user_id_array.length != 0 && @version != nil then %>
+<h3><%= I18n.t(:chakuchi_label_user_details) %></h3>
+<!-- User table -->
+  <table id="user_table" class="list" style="table-layout: fixed;">
+    <!-- Header -->
+    <thead>
+      <tr>
+        <th><%= I18n.t(:chakuchi_label_user_name) %></th>
+        <th><%= I18n.t(:chakuchi_label_issues_count) %></th>
+        <th><%= I18n.t(:chakuchi_label_estimated_hours) %></th>
+        <th><%= I18n.t(:chakuchi_label_spent_hours) %></th>
+        <th><%= I18n.t(:chakuchi_label_progress) %></th>
+        <th><%= I18n.t(:chakuchi_label_days_left) %></th>
+        <th><%= I18n.t(:chakuchi_label_due_date) %></th>
+        <th><%= I18n.t(:chakuchi_label_estimated_completion_date) %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- User loop -->
+      <% @user_id_array.each {|user_id| %>
+        <!-- Rows -->
+        <tr>
+          <% if user_id.nil? then name = I18n.t(:chakuchi_label_no_assignee) else name = @users_hash[user_id].name end %>
+          <!-- Cols -->
+          <td><%= avatar(@users_hash[user_id], :size => "16") %> <%= name %></td>
+          <td><%= @number_of_issues_hash[user_id] %></td>
+          <td><%= @total_estimated_hours_hash[user_id] %></td>
+          <td><%= @total_spent_hours_hash[user_id] %></td>
+          <% progress = @earned_value_total_hash[user_id] != 0 ? ((@earned_value_total_hash[user_id].to_f / @total_estimated_hours_hash[user_id].to_f) * 100).round : 0 %>
+          <td><%= progress %></td>
+          <td><% if @days_left_hash[user_id] != 0 then %><%= @days_left_hash[user_id] %> <%= I18n.t(:chakuchi_label_unit_days) %><% else %>-<% end %></td>
+          <td><%= @total_due_date_hash[user_id] %></td>
+          <td><%= @estimated_completion_date_hash[user_id] %></td>
+        </tr>
+      <% } %>
+      <tr>
+        <th><%= I18n.t(:chakuchi_label_total) %></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+      </tr>
+      <tr>
+        <td></td>
+        <td><%= @version.issues_count %></td>
+        <td><%= @version.estimated_hours %></td>
+        <td><%= @version.spent_hours %></td>
+        <% earned_value_total = @earned_value_total_hash.values.inject(:+) %>
+        <% progress_total = earned_value_total.to_i != 0 ? (earned_value_total.to_f / @version.estimated_hours.to_f * 100.to_f).round : 0 %>
+        <td><%= progress_total %></td>
+        <td><%= @days_left_hash.values.inject(:+) %> <%= I18n.t(:chakuchi_label_unit_days) %></td>
+        <td>-</td>
+        <td><%= @estimated_completion_date_hash.max{ |x, y| x[1] <=> y[1] }[1] %></td>
+      </tr>
+    </tbody>
+  </table>
+<% end %>
+</div>
