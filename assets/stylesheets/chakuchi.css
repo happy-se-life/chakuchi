@@ -1,0 +1,26 @@
+table.user_dialog_table {
+    text-align: center;
+    border-spacing: 0px;
+}
+
+td.downward_size {
+    width:  90px;
+    height: 40px;
+}
+
+td.under_line {
+    width:  90px;
+    border-bottom: 2px black solid;
+}
+
+td.left_line {
+    border-left: 2px black solid;
+}
+
+td.downward_line {
+    background-image: linear-gradient(to top right, transparent, transparent 49%, black 49%, black 51%, transparent 51%, transparent);
+}
+
+td.spacer {
+    width:  20px;
+}

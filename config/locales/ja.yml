@@ -10,12 +10,16 @@ ja:
   chakuchi_label_issues_count: チケット数
   chakuchi_label_closed_issues_count: 完了チケット数
   chakuchi_label_workdays_left: 残り営業日
-  chakuchi_label_days_left: 遅れ日数
+  chakuchi_label_days_late: 遅れ日数
   chakuchi_label_estimated_completion_date: 着地日
   chakuchi_label_user_name: 名前
   chakuchi_label_estimated_hours: 予定工数
+  chakuchi_label_estimated_hours_today: 今日までの予定工数
   chakuchi_label_spent_hours: 作業時間
   chakuchi_label_progress: 進捗率
   chakuchi_label_unit_days: 日
   chakuchi_label_total: 合計
   chakuchi_label_no_assignee: 未指定
+  chakuchi_label_start_and_due_date: 開始日/期日
+  chakuchi_label_today: 今日
+  chakuchi_label_earned_value: 出来高

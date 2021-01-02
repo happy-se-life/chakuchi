@@ -1,3 +1,7 @@
+<!-- Javascript -->
+<%= javascript_include_tag "chakuchi", :plugin => "chakuchi" %>
+<!-- CSS -->
+<%= stylesheet_link_tag 'chakuchi', :plugin => 'chakuchi' %>
 <div>
 <!-- Title -->
 <h2><%= I18n.t(:chakuchi_label_title) %></h2>
@@ -43,7 +47,7 @@
         <th><%= I18n.t(:chakuchi_label_issues_count) %></th>
         <th><%= I18n.t(:chakuchi_label_closed_issues_count) %></th>
         <th><%= I18n.t(:chakuchi_label_workdays_left) %></th>
-        <th><%= I18n.t(:chakuchi_label_days_left) %></th>
+        <th><%= I18n.t(:chakuchi_label_days_late) %></th>
         <th><%= I18n.t(:chakuchi_label_estimated_completion_date) %></th>
       </tr>
     </thead>
@@ -51,11 +55,11 @@
       <tr>
         <td><%= @version.name %></td>
         <td><%= (@version.start_date || "-") %></td>
-        <td><%= @version.due_date %></td>
+        <td><%= (@version.due_date || "-") %></td>
         <td><%= @version.issues_count %></td>
         <td><%= @version.issues_count - @version.open_issues_count %></td>
-        <td><%= @workdays_left %> <%= I18n.t(:chakuchi_label_unit_days) %></td>
-        <td><%= @days_left_hash.values.inject(:+) %> <%= I18n.t(:chakuchi_label_unit_days) %></td>
+        <td><%= (@workdays_left || "-") %> <%= I18n.t(:chakuchi_label_unit_days) %></td>
+        <td><%= @days_late_hash.values.inject(:+) %> <%= I18n.t(:chakuchi_label_unit_days) %></td>
         <td><%= @estimated_completion_date_hash.max{ |x, y| x[1] <=> y[1] }[1] %></td>
       </tr>
     </tbody>
@@ -74,7 +78,7 @@
         <th><%= I18n.t(:chakuchi_label_estimated_hours) %></th>
         <th><%= I18n.t(:chakuchi_label_spent_hours) %></th>
         <th><%= I18n.t(:chakuchi_label_progress) %></th>
-        <th><%= I18n.t(:chakuchi_label_days_left) %></th>
+        <th><%= I18n.t(:chakuchi_label_days_late) %></th>
         <th><%= I18n.t(:chakuchi_label_due_date) %></th>
         <th><%= I18n.t(:chakuchi_label_estimated_completion_date) %></th>
       </tr>
@@ -92,8 +96,17 @@
           <td><%= @total_spent_hours_hash[user_id] %></td>
           <% progress = @earned_value_total_hash[user_id] != 0 ? ((@earned_value_total_hash[user_id].to_f / @total_estimated_hours_hash[user_id].to_f) * 100).round : 0 %>
           <td><%= progress %></td>
-          <td><% if @days_left_hash[user_id] != 0 then %><%= @days_left_hash[user_id] %> <%= I18n.t(:chakuchi_label_unit_days) %><% else %>-<% end %></td>
-          <td><%= @total_due_date_hash[user_id] %></td>
+          <td>
+            <% if @total_estimated_hours_hash[user_id].to_i != 0 then %>
+              <% if user_id.nil? then %><% id_str = "user-dialog-0" %><% else %><% id_str = "user-dialog-" + user_id.to_s %><% end %>
+              <a href="#" onclick="$('#<%= id_str %>').dialog('open'); return false;">
+                <%= @days_late_hash[user_id] %> <%= I18n.t(:chakuchi_label_unit_days) %>
+              </a>
+            <% else %>
+              <%= @days_late_hash[user_id] %> <%= I18n.t(:chakuchi_label_unit_days) %>
+            <% end %>
+          </td>
+          <td><%= @number_of_issues_hash[user_id] == 0 ? "-" : @total_due_date_hash[user_id] %></td>
           <td><%= @estimated_completion_date_hash[user_id] %></td>
         </tr>
       <% } %>
@@ -115,7 +128,7 @@
         <% earned_value_total = @earned_value_total_hash.values.inject(:+) %>
         <% progress_total = earned_value_total.to_i != 0 ? (earned_value_total.to_f / @version.estimated_hours.to_f * 100.to_f).round : 0 %>
         <td><%= progress_total %></td>
-        <td><%= @days_left_hash.values.inject(:+) %> <%= I18n.t(:chakuchi_label_unit_days) %></td>
+        <td><%= @days_late_hash.values.inject(:+) %> <%= I18n.t(:chakuchi_label_unit_days) %></td>
         <td>-</td>
         <td><%= @estimated_completion_date_hash.max{ |x, y| x[1] <=> y[1] }[1] %></td>
       </tr>
@@ -123,3 +136,170 @@
   </table>
 <% end %>
 </div>
+<!-- Description of calculation verification dialog -->
+<!-- User loop -->
+<% @user_id_array.each {|user_id| %>
+  <% if user_id.nil? then %><% id_str = "user-dialog-0" %><% else %><% id_str = "user-dialog-" + user_id.to_s %><% end %>
+  <div id="<%= id_str %>" style="display: none;">
+    <!-- Sub Title -->
+    <% if user_id.nil? then name = I18n.t(:chakuchi_label_no_assignee) else name = @users_hash[user_id].name end %>
+    <h3><%= name %></h3>
+    <table class="user_dialog_table">
+      <!-- Row 1 -->
+      <tr>
+        <td><%= I18n.t(:chakuchi_label_estimated_hours) %></td>
+        <td class="spacer"></td>
+        <td class="under_line"></td>
+        <td class="under_line"><%= @total_estimated_hours_hash[user_id] %>h</td>
+        <td class=""></td>
+        <td class=""></td>
+        <td class=""></td>
+        <td class=""></td>
+        <td class=""></td>
+        <td class=""></td>
+        <td class=""></td>
+      </tr>
+      <!-- Row 2 -->
+      <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td class="left_line downward_size downward_line"></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <!-- Row 3 -->
+      <tr>
+        <td><%= I18n.t(:chakuchi_label_estimated_hours_today) %></td>
+        <td></td>
+        <td><% if @today_date <= @start_date_hash[user_id] then %><%= format("%.1f", @estimated_hours_today_hash[user_id]) %>h<% else %> <% end %></td>
+        <td></td>
+        <td class="left_line"></td>
+        <td class="downward_size downward_line"></td>
+        <td><% if @today_date > @start_date_hash[user_id] && @today_date < @due_date_hash[user_id] then %><%= format("%.1f", @estimated_hours_today_hash[user_id]) %>h<% else %> <% end %></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><% if @today_date >= @due_date_hash[user_id] then %><%= format("%.1f", @estimated_hours_today_hash[user_id]) %>h<% else %> <% end %></td>
+      <!-- Row 4 -->
+      <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td class="left_line"></td>
+        <td></td>
+        <td class="downward_size downward_line"></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <!-- Row 5 -->
+      <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td class="left_line"></td>
+        <td></td>
+        <td></td>
+        <td class="downward_size downward_line"></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <!-- Row 6 -->
+      <tr>
+        <td></td>
+        <td></td>
+        <td class="under_line"></td>
+        <td class="under_line"></td>
+        <td class="under_line left_line"></td>
+        <td class="under_line"></td>
+        <td class="under_line"></td>
+        <td class="under_line"></td>
+        <td class="under_line downward_size downward_line"></td>
+        <td class="under_line"></td>
+        <td class="under_line"></td>
+      </tr>
+      <!-- Row 7 -->
+      <tr>
+        <td><%= I18n.t(:chakuchi_label_start_and_due_date) %></td>
+        <td></td>
+        <td><% if @today_date <= @start_date_hash[user_id] then %><%= I18n.t(:chakuchi_label_today) %><% else %> <% end %></td>
+        <td><%= @start_date_hash[user_id] %></td>
+        <td></td>
+        <td></td>
+        <td><% if @today_date > @start_date_hash[user_id] && @today_date < @due_date_hash[user_id] then %><%= I18n.t(:chakuchi_label_today) %><% else %> <% end %></td>
+        <td></td>
+        <td></td>
+        <td><%= @due_date_hash[user_id] %></td>
+        <td><% if @today_date >= @due_date_hash[user_id] then %><%= I18n.t(:chakuchi_label_today) %><% else %> <% end %></td>
+      </tr>
+      <!-- Row 8 -->
+      <tr>
+        <td><%= I18n.t(:chakuchi_label_earned_value) %></td>
+        <td></td>
+        <td><% if @today_date <= @start_date_hash[user_id] then %><%= format("%.1f", @earned_value_total_hash[user_id]) %>h<% else %> <% end %></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><% if @today_date > @start_date_hash[user_id] && @today_date < @due_date_hash[user_id] then %><%= format("%.1f", @earned_value_total_hash[user_id]) %>h<% else %> <% end %></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><% if @today_date >= @due_date_hash[user_id] then %><%= format("%.1f", @earned_value_total_hash[user_id]) %>h<% else %> <% end %></td>
+      </tr>
+      <!-- Row 9 -->
+      <% progress = @earned_value_total_hash[user_id] != 0 ? ((@earned_value_total_hash[user_id].to_f / @total_estimated_hours_hash[user_id].to_f) * 100).round : 0 %>
+      <tr>
+        <td><%= I18n.t(:chakuchi_label_progress) %></td>
+        <td></td>
+        <td><% if @today_date <= @start_date_hash[user_id] then %><%= progress %>%<% else %> <% end %></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><% if @today_date > @start_date_hash[user_id] && @today_date < @due_date_hash[user_id] then %><%= progress %>%<% else %> <% end %></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><% if @today_date >= @due_date_hash[user_id] then %><%= progress %>%<% else %> <% end %></td>
+      </tr>
+      <!-- Row 10 -->
+      <tr>
+        <td><%= I18n.t(:chakuchi_label_days_late) %></td>
+        <td></td>
+        <td><% if @today_date <= @start_date_hash[user_id] then %><%= @days_late_hash[user_id] %> <%= I18n.t(:chakuchi_label_unit_days) %><% else %> <% end %></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><% if @today_date > @start_date_hash[user_id] && @today_date < @due_date_hash[user_id] then %><%= @days_late_hash[user_id] %> <%= I18n.t(:chakuchi_label_unit_days) %><% else %> <% end %></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><% if @today_date >= @due_date_hash[user_id] then %><%= @days_late_hash[user_id] %> <%= I18n.t(:chakuchi_label_unit_days) %><% else %> <% end %></td>
+      </tr>
+      <!-- Row 11 -->
+      <tr>
+        <td><%= I18n.t(:chakuchi_label_estimated_completion_date) %></td>
+        <td></td>
+        <td><% if @today_date <= @start_date_hash[user_id] then %><%= @estimated_completion_date_hash[user_id] %><% else %> <% end %></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><% if @today_date > @start_date_hash[user_id] && @today_date < @due_date_hash[user_id] then %><%= @estimated_completion_date_hash[user_id] %><% else %> <% end %></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><% if @today_date >= @due_date_hash[user_id] then %><%= @estimated_completion_date_hash[user_id] %><% else %> <% end %></td>
+      </tr>
+    </table>
+  </div>
+<% } %>
